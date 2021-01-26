@@ -1,0 +1,368 @@
+<!-- ANASTASIOS ARTEMIOS GIANNAKOULIAS 3150024-->
+<!-- IASON CHATZOPOYLOS 3150197-->
+<!DOCTYPE html>
+
+<html lang="">
+
+<head>
+    <meta charset="utf-8">
+
+    <style type="text/css">
+        .container {
+            overflow-x: scroll;
+            overflow-y: hidden;
+            width: 1050px;
+            height: 150px;
+            white-space: nowrap;
+            margin: 10px;
+            background: #404341;
+        }
+
+        .keyboard {
+            width: auto;
+            padding: 0;
+            margin: 0;
+
+        }
+        .lfo{
+            background: #bec2c5;
+            height: 70px;
+            width: 1050px;
+            text-align: left;
+            align-content: end;
+            border:2px solid black;
+            font: 14px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+        }
+        input[type=range][orient=vertical]
+        {
+            writing-mode: bt-lr; /* IE */
+            -webkit-appearance: slider-vertical; /* WebKit */
+            width: 8px;
+            height: 175px;
+            padding: 0 5px;
+        }
+        .lfo1{
+            background: #bec2c5;
+            height: 70px;
+            width: 1050px;
+            text-align: left;
+            align-content: end;
+            border:2px solid black;
+            font: 14px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+        }
+        .compressor{
+            background: #bec2c5;
+            height: 250px;
+            width: 1050px;
+            text-align: left;
+            align-content: end;
+            border:2px solid black;
+            font: 14px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+        }
+        .ADSR_ENVELOPE{
+            background: #bec2c5;
+            height: 230px;
+            width: 1050px;
+            text-align: left;
+            align-content: end;
+            border:2px solid black;
+            font: 14px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+        }
+        .filters{
+            background: #bec2c5;
+            height: 140px;
+            width: 1050px;
+            text-align: left;
+            align-content: end;
+            border:2px solid black;
+            font: 14px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+        }
+        .key {
+            vertical-align: top;
+            cursor: pointer;
+            font: 16px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+            border: 1px solid black;
+            border-radius: 2px;
+            width: 40px;
+            height: 100px;
+            text-align: center;
+            box-shadow: 1px 1px lightgrey;
+            display: inline-block;
+            position: relative;
+            margin-right: 1px;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            background: white;
+        }
+        .keySharp {
+            vertical-align: top;
+            cursor: pointer;
+            font: 12px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+            border: 1px black;
+            border-radius: 2px;
+            width: 20px;
+            height: 60px;
+            text-align: center;
+            box-shadow: 2px 2px darkgray;
+            display: inline-block;
+            position: relative;
+            margin-right: 1px;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            color: white;
+            background: black;
+
+        }
+        .key div {
+            position: absolute;
+            bottom: 0;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .key div sub {
+            font-size: 10px;
+            pointer-events: none;
+        }
+
+        .key:hover {
+            background-color: #9595e5;
+        }
+
+        .key:active {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .octave {
+            display: inline-block;
+            padding: 0 6px 0 0;
+            background: gray;
+        }
+
+        .settingsBar {
+            padding-top: 8px;
+            font: 14px "Open Sans", "Lucida Grande", "Arial", sans-serif;
+            position: relative;
+            vertical-align: middle;
+            width: 1050px;
+            height: 30px;
+            background: #bec2c5;
+            border:3px solid black;
+        }
+
+        .left {
+            width: 50%;
+            position: absolute;
+            left: 0;
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .left span, .left input {
+            vertical-align: middle;
+        }
+
+        .right {
+            width: 50%;
+            position: absolute;
+            right: 0;
+            display: table-cell;
+            vertical-align: text-bottom;
+        }
+
+        .right span {
+            vertical-align: middle;
+        }
+
+        .right input {
+            vertical-align: baseline;
+        }
+    </style>
+
+    <title> cs420 DIGITAL SYNTHESIZER ver.6.9.0.0.0.0.1 mlg 360 QS 1v1 </title>
+</head>
+<body>
+
+<div class="container">
+    <div class="keyboard"></div>
+</div>
+<div class="settingsBar">
+    <div class="left">
+        <span>Volume: </span>
+        <label>
+            <input type="range" min="0.0" max="1.0" step="0.01"
+                   value="0.25" list="volumes" name="volume">
+        </label>
+
+        <datalist id="volumes">
+            <option value="0.0" label="Mute">
+            <option value="1.0" label="100%">
+        </datalist>
+
+        <label>
+            <span> Distortion :</span>
+            <input type="range" min="0" max="100000" step="10"
+                   value="1000"  name="distRange">
+        </label>
+    </div>
+
+    <div class="right">
+        <span>Current waveform: </span>
+        <label>
+            <select name="waveform">
+                <option value="sine" selected>Sine</option>
+                <option value="square" >Square</option>
+                <option value="sawtooth">Sawtooth</option>
+                <option value="triangle">Triangle</option>
+                <option value="custom">Custom</option>
+            </select>
+        </label>
+
+    </div>
+
+
+
+
+</div>
+<container name="efx">
+
+    <div class="ADSR_ENVELOPE">
+        <span>ADSR ENVELOPE:</span>
+        <p>
+            <label id = "A">
+                <input type="range" min="0" max = "2" step= "0.1"
+                       value = "0" orient="vertical" name = "A" />
+                <span>A</span>
+            </label>
+            <label id = "D">
+                <input type="range" min="0" max = "2" step= "0.1"
+                       value = "0" orient="vertical" name = "D" />
+                <span>D</span>
+            </label>
+            <label id = "S">
+                <input type="range" min="0" max = "10" step= "1"
+                       value = "3" orient="vertical" name = "S" />
+                <span>S</span>
+            </label>
+            <label id = "R">
+                <input type="range" min="0" max = "2" step= "0.1"
+                       value = "0.5" orient="vertical" name = "R" />
+                <span>R</span>
+            </label>
+        </p>
+    </div>
+    <div class="compressor">
+        <span>Compressor: </span>
+        <p>
+            <label id ="comp_attack">
+                <span> Attack :</span>
+                <input type="range" min="0.003" max="1" step="0.001"
+                       value="0.003" name="comp_attack" >
+            </label>
+        </p>
+        <p>
+            <label id ="comp_release">
+                <span> Release :</span>
+                <input type="range" min="0" max="1" step="0.001"
+                       value="0.25" name="comp_release" >
+            </label>
+        </p>
+        <p>
+            <label id ="comp_knee">
+                <span> Knee     :     </span>
+                <input type="range" min="0" max="40" step="1"
+                       value="1" name="comp_knee">
+            </label>
+        </p>
+        <p>
+            <label id ="comp_ratio">
+                <span> Ratio :    </span>
+                <input type="range" min="1" max="20" step="0.001"
+                       value="1" name="comp_ratio">
+            </label>
+        </p>
+        <p>
+            <label id ="comp_threshold">
+                <span> Threshold :</span>
+                <input type="range" min="-100" max="0" step="1"
+                       value="-78" name="comp_thr">
+            </label>
+        </p>
+    </div>
+
+    <div class ="filters">
+        <span> Filter Options:</span>
+        <br>
+        <span>Frequency: (50hz-10khz) </span>
+        <label id ="filtRange">
+            <input type="range" min="50" max="10000" step="10"
+                   value="2500"   name="filter">
+        </label>
+        <datalist id="Filters">
+            <option value="0.0" label="Mute">
+            <option value="1.0" label="100%">
+        </datalist>
+
+        <span>Current filter: </span>
+        <label>
+
+            <select name="filterType" >
+                <option value="allpass" selected>Allpass</option>
+                <option value="lowpass">Lowpass</option>
+                <option value="highpass" >Highpass</option>
+                <option value="bandpass">Bandpass</option>
+                <option value="lowshelf">Lowshelf</option>
+                <option value="peaking">Peaking</option>
+                <option value="notch">Notch</option>
+
+            </select>
+        </label>
+
+        <p>
+            <label id ="q_Range">
+                <span> Q : </span>
+                <input type="range" min="0" max="1000" step="10"
+                       value="10"   name="qRange">
+            </label>
+        </p>
+        <p>
+            <label id ="f_gain">
+                <span> Gain : </span>
+                <input type="range" min="-40" max="40" step="1"
+                       value="-10"   name="filter_gain">
+            </label>
+        </p>
+    </div>
+    <div class="lfo">
+        <span>LFO: </span>
+        <p>
+            <section class="controls">
+                <label for="lfo">Modulation Frequency: </label>
+                <input name="lfo" id="lfo" type="range" min="1" max="20" value="3" step="0.5" />
+                Power <input type="checkbox" name="lfochk" id="lfochk" onclick="lfoState()">
+            </section>
+        </p>
+    </div>
+    <div class="lfo1">
+        <span>Filter LFO: </span>
+        <p>
+            <section class="controls1">
+                <label for="lfo1">Modulation Frequency: </label>
+                <input name="lfo1" id="lfo1" type="range" min="0.1" max="20" value="2" step="0.1" />
+                Power <input type="checkbox" name="lfochk1" id="lfochk1" onclick="lfo1State()">
+            </section>
+        </p>
+    </div>
+
+</container>
+
+</body>
+<script type="module" src="script.js"></script>
+
+</html>
