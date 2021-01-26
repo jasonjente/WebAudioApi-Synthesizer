@@ -4,24 +4,38 @@
         IASON CHATZOPOULOS P3150197
         DECEMBER 2020 - JANUARY 2021
  */
-
-
 window.webkitAudioContext = undefined;
+//we will use this to handle all audio
 let audioContext = new (window.AudioContext || window.webkitAudioContext)();
-//REFERENCES TO HTML keyboard:css element me ta keys
+//REFERENCES TO HTML keyboard
 let keyboard = document.querySelector(".keyboard");
-let wavePicker = document.querySelector("select[name='waveform']"); // epilogh waveform
-let volumeControl = document.querySelector("input[name='volume']");  //vol knob
-let filterPicker = document.querySelector("select[name='filterType']"); //epilogh filtrou
+//select waveform
+let wavePicker = document.querySelector("select[name='waveform']");
+//master gain
+let volumeControl = document.querySelector("input[name='volume']");
+//filtertype high pass, low pass, band pass etc
+let filterPicker = document.querySelector("select[name='filterType']");
+//frequency for the filter
 let filterKnob = document.querySelector("input[name='filter']")
-
+//Q range for filter
+let qRange = document.querySelector("input[name='qRange']");
+//gain filter
+let filterGain = document.querySelector("input[name='filter_gain']");
+//filter setup
+let filter = audioContext.createBiquadFilter();
+//let filter = new BiquadFilterNode(audioContext, filterPicker.options)
+//distortion input
+let distortion;
 let distortionSlider = document.querySelector("input[name='distRange']");
+//envelope ADSR html input
 let Atk = document.querySelector("input[name='A']");
 let Dec = document.querySelector("input[name='D']");
 let Sus = document.querySelector("input[name='S']");
 let Rel = document.querySelector("input[name='R']");
+//S and R
 let release = Rel.value;
 let sustain = Sus.value;
+//compressor setup
 let comp_ratio, comp_attack, comp_knee, comp_thr, comp_release;
 comp_attack = document.querySelector("input[name='comp_attack']");
 comp_release = document.querySelector("input[name='comp_release']");
@@ -33,28 +47,22 @@ comp_ratio.addEventListener("change", changeCompRatio, false);
 comp_knee.addEventListener("change", changeCompKnee, false);
 comp_release.addEventListener("change", changeCompRelease, false);
 comp_thr.addEventListener("change", changeCompThreshold, false);
-
-let qRange = document.querySelector("input[name='qRange']");
-let filterGain = document.querySelector("input[name='filter_gain']");
-let distortion;
-let filter = new BiquadFilterNode(audioContext, filterPicker.options)
 let dynamicsCompressor = audioContext.createDynamicsCompressor();
 //CONTAINS THE OSCILLATORS
 let oscList = [];
 let masterGainNode = null;
 let noteFreq = null;
-
+//custom waveform
 let customWaveform = null;
 let sineTerms = null;
 let cosineTerms = null;
-
+//ADSR Envelope
+let envelope;
+//lfo setup
 let lfoHz = 1;
 let lfoHz1 = 3;
-
 let lfoFlag = false;
 let lfoFlag1 = false;
-
-let envelope;
 
 const lfoControl = document.querySelector("input[name='lfo']");
 lfoControl.addEventListener('input', ev => {
@@ -67,7 +75,7 @@ lfoControl1.addEventListener('input', ev => {
 }, false);
 
 function createFrequencyBoard() {
-    // DHMIOURGIA PINAKA SUXNOTITWN KAI NOTAS EXEI THN MORFH:
+    // Creation of the keyboard, an index of note, octave and frequency.
     /*       0          1
           27.50, A |  29.13, A# ....
     *
@@ -179,24 +187,26 @@ function createFrequencyBoard() {
 
 
 function setup() {
-
+    //create the board
     noteFreq = createFrequencyBoard();
+    //DOM manipulation, use of EventListener
     distortionSlider.addEventListener("change", changeDistortion, false);
     Atk.addEventListener("change", changeAttack,false);
     Dec.addEventListener("change",changeDecay,false);
     Sus.addEventListener("change",changeSustain,false);
     Rel.addEventListener("change",changeRelease,false);
-    console.log(Atk.value);
     volumeControl.addEventListener("change", changeVolume, false);
     filterKnob.addEventListener("change", changeFilterFreq, false);
 
+    //distortion initialization
     distortion = audioContext.createWaveShaper();
-
+    //Creation of master channel
     masterGainNode = audioContext.createGain();
     masterGainNode.connect(audioContext.destination);
     masterGainNode.gain.value = volumeControl.value;
 
-
+    //for each note in the frequency board create an element,
+    // if it is a sharp note it will create a black note on the UI
     noteFreq.forEach(function (keys, idx) {
         let keyList = Object.entries(keys);
         let octaveElem = document.createElement("div");
@@ -209,33 +219,32 @@ function setup() {
     });
 
     document.querySelector("div[data-note='B'][data-octave='5']").scrollIntoView(false);
-    // 0 to prwto
+    //Custom waveform, change the values in this array
     sineTerms = new Float32Array([0, 3.4433, 21, 0.333, 13]);
     cosineTerms = new Float32Array(sineTerms.length);
     customWaveform = audioContext.createPeriodicWave(cosineTerms, sineTerms);
-
+    //creates an index to know which note is playing at all times.
     for (let i = 0; i < 11; i++) {
         oscList[i] = [];
     }
 }
-
+//initialize
 setup();
-
-
+//is called by the notePressed method with the frequency and returtns this oscillator
 function playTone(freq) {
-
+    //setup the values for the components
     dynamicsCompressor.attack.value = comp_attack.value; // min 0.003 max 1  default 0
     dynamicsCompressor.knee.value = comp_knee.value; //min 0 max 40 default 30
-    dynamicsCompressor.ratio.value = comp_ratio.value;//The amount of dB change in input for a 1 dB change in output. min 1 max 20 default 12??? gt 12 wtf
+    dynamicsCompressor.ratio.value = comp_ratio.value;//The amount of dB change in input for a 1 dB change in output. min 1 max 20 default 12
     dynamicsCompressor.release.value = comp_release.value;
     dynamicsCompressor.threshold.value = comp_thr.value; // default -24 min -100 max 0
-
+    //distortion curve
     distortion.curve = makeDistortionCurve(distortionSlider.value/1000);
-
+    //Qval for the filter
     let qVal = qRange.value;
-    // filter = audioContext.createBiquadFilter();
-    //PERNANE MONO TA EPITREPOMENA HDH FILTRWN
+    //We allow only the filters allowed by the library
     // noinspection JSValidateTypes
+    // not all filters share the same components
     filter.type = filterPicker.options[filterPicker.selectedIndex].value;
     console.log(filter);
     switch (filter.type) {
@@ -243,7 +252,6 @@ function playTone(freq) {
             filter.frequency.setValueAtTime(filterKnob.value, audioContext.currentTime);
             filter.Q.value = qVal;
             break;
-
         case "lowshelf" || "highshelf":
             filter.frequency.setValueAtTime(filterKnob.value, audioContext.currentTime);
             filter.gain.setValueAtTime(filterGain.value, audioContext.currentTime);
@@ -254,47 +262,47 @@ function playTone(freq) {
             filter.Q.value = qVal;
             break;
     }
+    //initialization of the ADSR envelope
     envelope = audioContext.createGain();
-
+    //Attack
     envelope.gain.exponentialRampToValueAtTime(Sus.value,audioContext.currentTime + parseFloat(Atk.value));
-
-    //oscillator LFO CREATION
+    //Decay
+    envelope.gain.exponentialRampToValueAtTime(Sus.value*0.9,audioContext.currentTime + parseFloat(Atk.value)+parseFloat(Dec.value));
+    //oscillator LFO CREATION and setup
     let amp = audioContext.createGain();
     amp.gain.setValueAtTime(1, audioContext.currentTime);
     let lfo = audioContext.createOscillator();
     lfo.type = 'square';
     lfo.frequency.setValueAtTime(lfoHz, audioContext.currentTime);
-
     lfo.start();
-
+    //BUG BUG
     //filter LFO CREATION
     const amp1 = audioContext.createGain();
     amp1.gain.setValueAtTime(1, audioContext.currentTime);
-
     const lfofilter = audioContext.createOscillator();
     lfofilter.type = 'square';
     lfofilter.frequency.setValueAtTime(lfoHz1, audioContext.currentTime);
-
     lfofilter.start();
-    //OSCILLATOR CREATION
+
+    //OSCILLATOR CREATION and setup
     let osc = audioContext.createOscillator();
-
     let type = wavePicker.options[wavePicker.selectedIndex].value;
-
     if (type === "custom") {
         osc.setPeriodicWave(customWaveform);
     } else {
         // noinspection JSValidateTypes
         osc.type = type;
     }
-
     osc.frequency.value = freq;
 
     lfoState();
     lfo1State();
-
+    //4 cases for the configuration of the synth
     if (lfoFlag) {
+        //!BUGBUG CASE 1:
+        //Both LFO's open
         if (lfoFlag1) {
+            //BUGBUG
             //lfofilter.connect(filter.frequency);
             lfo.connect(amp.gain);
             osc.connect(envelope);
@@ -307,6 +315,7 @@ function playTone(freq) {
             osc.start(audioContext.currentTime);
 
         } else {
+            //CASE 2:
             lfo.connect(amp.gain);
             osc.connect(envelope);
             osc.connect(amp);
@@ -318,6 +327,7 @@ function playTone(freq) {
             osc.start(audioContext.currentTime);
         }
     }else{
+        //CASE 3:
         if(lfoFlag1){
             osc.connect(envelope);
             envelope.connect(distortion);
@@ -328,6 +338,7 @@ function playTone(freq) {
 
         }
         else{
+            //CASE 4:
             osc.connect(envelope);
             envelope.connect(distortion);
             distortion.connect(filter);
@@ -337,19 +348,22 @@ function playTone(freq) {
         }
 
     }
-    envelope.gain.exponentialRampToValueAtTime(0.0001,audioContext.currentTime + parseFloat(Atk.value + Dec.value+ Rel.value));
+    //this is supposed to be the release part of the adsr
+    envelope.gain.exponentialRampToValueAtTime(0.00001,audioContext.currentTime + parseFloat(Atk.value + Dec.value+ Rel.value));
     return osc;
 }
+//checks if the user has turned on this lfo
 function lfoState(){
     let remember = document.getElementById('lfochk');
     lfoFlag = remember.checked;
 }
 
+//checks if the user has turned on this lfo
 function lfo1State(){
     let remember = document.getElementById('lfochk1');
     lfoFlag1 = remember.checked;
 }
-
+//Creates all html elements and appends them adding event listener events
 function createKey(note, octave, freq) {
     let keyElement = document.createElement("div");
     let labelElement = document.createElement("div");
@@ -361,34 +375,32 @@ function createKey(note, octave, freq) {
     keyElement.dataset["octave"] = octave;
     keyElement.dataset["note"] = note;
     keyElement.dataset["frequency"] = freq;
-
     labelElement.innerHTML = note + "<sub>" + octave + "</sub>";
-
     keyElement.appendChild(labelElement);
-
     keyElement.addEventListener("mousedown", notePressed, false);
     keyElement.addEventListener("mouseup", noteReleased, false);
     keyElement.addEventListener("mouseover", notePressed, false);
     keyElement.addEventListener("mouseleave", noteReleased, false);
-
     return keyElement;
 }
+//Change ADSR attack
 function changeAttack() {
     console.log(Atk.value)
     envelope.gain.exponentialRampToValueAtTime(1,audioContext.currentTime+ parseFloat(Atk.value));
 }
-
+//Change ADSR Decay
 function changeDecay() {
     envelope.gain.exponentialRampToValueAtTime(Sus.value,audioContext.currentTime + parseFloat(Dec.value));
 }
-
+//Change ADSR sustain
 function changeSustain() {
     sustain = Sus.value;
 }
-
+//Change ADSR release
 function changeRelease() {
     release = Rel.value;
 }
+//triggers on click and uses the osclist index to create a new osc while the note is pressed
 function notePressed(event) {
     if (event.buttons && 1) {
         let dataset = event.target.dataset;
@@ -399,7 +411,7 @@ function notePressed(event) {
         }
     }
 }
-
+//stops the oscillators when the users releases the mouse
 function noteReleased(event) {
     let dataset = event.target.dataset;
 
@@ -412,44 +424,44 @@ function noteReleased(event) {
     }
 
 }
-
+//changes the master volume
 function changeVolume() {
     masterGainNode.gain.value = volumeControl.value
     console.log(masterGainNode.gain);
 }
-
+//changes the frequency of the filter
 function changeFilterFreq() {
     filter.frequency.value = filterKnob.value;
     console.log(filter.frequency);
 }
-
+//creates a new distortion curve
 function changeDistortion() {
-
     distortion.curve = makeDistortionCurve(distortionSlider.value);
 }
-
+//change compressor ratio
 function changeCompRatio() {
     dynamicsCompressor.ratio.value = comp_ratio.value;
 }
-
+//change compressor release
 function changeCompRelease() {
     dynamicsCompressor.release.value = comp_release.value;
 }
-
+//change compressor knee
 function changeCompKnee() {
     dynamicsCompressor.knee.value = comp_knee.value;
 }
-
+//change compressor threshold
 function changeCompThreshold() {
     dynamicsCompressor.threshold.value = comp_thr.value;
     console.log(dynamicsCompressor.attack);
 }
-
+//change compressor attack
 function changeCompAttack() {
     dynamicsCompressor.attack.value = comp_attack.value;
     console.log(dynamicsCompressor.attack);
 }
-
+//creates the curve of the distortion by resampling the signal (?)
+//found on a mozilla tutorial and to be honest it just works, no idea how.
 function makeDistortionCurve(amount) {
     let k = typeof amount === 'number' ? amount : 50,
         n_samples = 44100,
